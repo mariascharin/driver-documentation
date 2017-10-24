@@ -21,37 +21,37 @@ buildscript {
         classpath "org.asciidoctor:asciidoctorj-pdf:$asciidoctorjPdfVersion"
         classpath "org.asciidoctor:asciidoctorj-groovy-dsl:$asciidoctorGroovyDslVersion"
         classpath "org.ajoberstar:gradle-git:$gradleGitVersion"
+        classpath 'net.sf.docbook:docbook-xsl:1.79.1:ns-resources@zip'
+        classpath fileTree(dir: "${rootProject.projectDir}/lib", include: '*.jar')
+        classpath files("docbook/catalog/")
     }
 }
 
 plugins {
+    id 'base'
+    id 'org.neo4j.doc.build.vale' version '1.0-alpha01b'
+    id 'org.neo4j.doc.build.saxon' version '1.0-alpha01'
+    id 'org.neo4j.doc.build.docbook' version '1.0-alpha01'
     id "de.undercouch.download" version "3.2.0"
 }
 
-version = '3.2'
+// apply plugin 'vale'
 
-def docsRepository = System.env.MAVEN_REPO_LOCAL
-
-if (!project.hasProperty("neo4jVersion")) { ext.neo4jVersion = "3.2.0-SNAPSHOT" }
-if (!project.hasProperty("driverVersion")) { ext.driverVersion = "1.1" }
-if (!project.hasProperty("ogmVersion")) { ext.ogmVersion = "2.1.2" }
-if (null == docsRepository) { ext.docsRepository = "https://m2.neo4j.org/content/repositories/snapshots/" }
-
-ext {
-    // Set `neo4jDocVersion` for use in the generated docs
-    // Those docs that follow Neo4j versions do so tracking `major.minor[-prerelease]`
-    // So, drop the patch version:
-    neo4jVersionParts = neo4jVersion.split('-')
-    neo4jDocVersion = neo4jVersionParts[0][0..2]
-    if (1 < neo4jVersionParts.size()) {
-        neo4jDocVersion += "-alpha"
-    }
-
-    // Make it a little easier to build release and pre-release OGM docs.
-    ogmDocVersion = ogmVersion.tokenize('.')[0..1].join(".")
-    if (ogmVersion.contains("-")) {ogmDocVersion += "-pre"}
-
+repositories {
+       // maven { }
+       mavenLocal()
 }
+
+version = '1.4'
+
+def traceDocbook = hasProperty('traceDocbook') ? true : false
+
+// def docsRepository = System.env.MAVEN_REPO_LOCAL
+
+if (!project.hasProperty("neo4jVersion")) { ext.neo4jVersion = "3.4.0-SNAPSHOT" }
+if (!project.hasProperty("driverVersion")) { ext.driverVersion = "1.4" }
+if (!project.hasProperty("ogmVersion")) { ext.ogmVersion = "2.1.2" }
+// if (null == docsRepository) { ext.docsRepository = "https://m2.neo4j.org/content/repositories/snapshots/" }
 
 configurations {
     docs {
@@ -59,119 +59,103 @@ configurations {
     }
 }
 
-dependencies {
-    docs(
-        "org.neo4j.doc:neo4j-manual-contents:${neo4jVersion}:docs@jar",
-    )
+ext {
+    driverDocsBuildDir = "${rootProject.buildDir}/driver-documentation/${driverVersion}"
+    driverDocsGitUri = "https://github.com/neo4j/driver-documentation.git"
+    driverDocsGitRef = "1.4"
+}
+ext {
+    // Set `neo4jDocVersion` for use in the generated docs
+    // Those docs that follow Neo4j versions do so tracking `major.minor[-prerelease]`
+    // So, drop the patch version:
+    neo4jVersionParts = neo4jVersion.split('-')
+    neo4jDocVersion = neo4jVersionParts[0][0..2]
+    if (1 < neo4jVersionParts.size()) {
+        neo4jDocVersion += "-preview"
+    }
+
+    // Make it a little easier to build release and pre-release OGM docs.
+    ogmDocVersion = ogmVersion.tokenize('.')[0..1].join(".")
+    if (ogmVersion.contains("-")) {ogmDocVersion += "-pre"}
+
+    docId = 'driver-manual'
+    olinkdb = "${buildDir}/olinkdb/olinkdb.xml"
 }
 
-
-apply plugin: 'base'
-
-defaultTasks 'asciidoctorHtml', 'asciidoctorPdf'
-
-//
-// THIS BUILD SCRIPT IS NOT KEPT UP-TO-DATE
-// THE DRIVER DOCUMENTATION IS A PART OF THE NEO4J DEVELOPER MANUAL
-// TO BUILD THE DRIVER MANUAL INDEPENDENTLY, UPDATE THE VERSIONS BELOW
-//
-allprojects {
-
-    apply plugin: 'base'
-
-    repositories {
-        // NB: "However, as Gradle prefers to use modules whose descriptor has been created from real meta-data rather than
-        // being generated, flat directory repositories cannot be used to override artifacts with real meta-data from other
-        // repositories." https://docs.gradle.org/current/userguide/dependency_management.html#sec:flat_dir_resolver
-        flatDir {
-            dirs "${rootProject.projectDir}/shared"
-        }
-        maven {
-            url "${docsRepository}"
-        }
-        maven {
-            url "https://m2.neo4j.org/content/repositories/snapshots/"
-        }
-        mavenCentral()
-    }
-
-    ext {
-        neo4jManualContentsDir = "${rootProject.buildDir}/neo4j-docs-content/neo4j-manual-contents/${neo4jVersion}"
-        neo4jJavadocsDir = "${rootProject.buildDir}/neo4j-docs-content/neo4j-javadocs/${neo4jVersion}"
-        driverDocVersion = driverVersion
-        copyrightYear = '2017'
-        docsBaseUri = "https://neo4j.com/docs"
-        docsCrossReferenceBaseUris = [
-                'operations-manual-base-uri' : "${docsBaseUri}/operations-manual/${neo4jDocVersion}",
-                'developer-manual-base-uri'  : "${docsBaseUri}/developer-manual/${neo4jDocVersion}",
-                'java-reference-base-uri'    : "${docsBaseUri}/java-reference/${neo4jDocVersion}",
-                'rest-docs-base-uri'         : "${docsBaseUri}/rest-docs/${neo4jDocVersion}",
-                'ogm-manual-base-uri'        : "${docsBaseUri}/ogm-manual/${ogmDocVersion}"
-        ]
-        commonAsciidoctorAttributes = [
-                'copyright-year'                   : copyrightYear,
-                'copyright'                        : "${copyrightYear} Neo Technology",
-                'common-license-page-uri'          : "${docsBaseUri}/license",
-                'neo4j-version'                    : neo4jDocVersion,
-                'neo4j-version-exact'              : neo4jVersion,
-                'neo4j-git-version'                : neo4jDocVersion,
-                'doctype'                          : 'book',
-                'icons'                            : 'font',
-                'imagesdir'                        : './images',
-                'attribute-missing'                : 'warn',
-                'neo4j-server-docs-dir'            : "${neo4jManualContentsDir}/docs/neo4j-server-docs-docs-jar",
-                'neo4j-enterprise-server-docs-dir' : "${neo4jManualContentsDir}/docs/neo4j-server-enterprise-docs-docs-jar",
-        ] + docsCrossReferenceBaseUris
-        htmlAsciidoctorAttributes = [
-                'toc'        : 'left',
-                'stylesdir'  : 'css',
-                'stylesheet' : 'style.css',
-                'sectanchors': '',
-                'docinfo1'   : '',
-                'linkcss'    : ''
-        ]
-        docbookAsciidoctorAttributes = [:]
-        pdfAsciidoctorAttributes = [
-                'source-highlighter': 'rouge',
-                'pdf-style'         : 'neo',
-                'pdf-fontsdir'      : "$rootProject.buildDir/fonts".toString(),
-                'doctype'           : 'book',
-                'toc'               : '',
-                'showlinks'         : '',
-                'nonhtmloutput'     : '',
-        ]
-        fonts = [
-                'Open Sans.zip'  : 'https://www.google.com/fonts/download?kit=3hvsV99qyKCBS55e5pvb3ltkqrIMaAZWyLYEoB48lSQ',
-                'Inconsolata.zip': 'https://www.google.com/fonts/download?kit=CNj0Ze1H6w4FVgc32wmZS4fD-WQWLbF4rYwcBGowFYY',
-                'Lora.zip'       : 'https://www.google.com/fonts/download?kit=iwrHM7FQEcKgsUvDuXxrPg',
-        ]
-    }
+ext {
+    driverDocVersion = driverVersion
+    copyrightYear = '2017'
+    docsBaseUri = "https://neo4j.com/docs"
+    docsCrossReferenceBaseUris = [
+            'operations-manual-base-uri' : "${docsBaseUri}/operations-manual/${neo4jDocVersion}",
+            'cypher-manual-base-uri'     : "${docsBaseUri}/cypher-manual/${neo4jDocVersion}",
+            'driver-manual-base-uri'     : "${docsBaseUri}/driver-manual/${driverDocVersion}",
+            'java-reference-base-uri'    : "${docsBaseUri}/java-reference/${neo4jDocVersion}",
+            'rest-docs-base-uri'         : "${docsBaseUri}/rest-docs/${neo4jDocVersion}",
+            'ogm-manual-base-uri'        : "${docsBaseUri}/ogm-manual/${ogmDocVersion}"
+    ]
+    commonAsciidoctorAttributes = [
+            'copyright-year'                   : copyrightYear,
+            'copyright'                        : "${copyrightYear} Neo Technology",
+            'common-license-page-uri'          : "${docsBaseUri}/license",
+            'neo4j-version'                    : neo4jDocVersion,
+            'neo4j-version-exact'              : neo4jVersion,
+            'neo4j-git-version'                : neo4jDocVersion,
+            'driver-version'                   : driverVersion,
+            'doctype'                          : 'book',
+            'icons'                            : 'font',
+            'imagesdir'                        : './images',
+            'attribute-missing'                : 'warn',
+    ] + docsCrossReferenceBaseUris
+    htmlAsciidoctorAttributes = [
+            'toc'        : 'left',
+            'stylesdir'  : 'css',
+            'stylesheet' : 'style.css',
+            'sectanchors': '',
+            'docinfo1'   : '',
+            'linkcss'    : ''
+    ]
+    docbookAsciidoctorAttributes = [:]
+    pdfAsciidoctorAttributes = [
+            'source-highlighter': 'rouge',
+            'pdf-style'         : 'neo',
+            'pdf-fontsdir'      : "$rootProject.buildDir/fonts".toString(),
+            'doctype'           : 'book',
+            'toc'               : '',
+            'showlinks'         : '',
+            'nonhtmloutput'     : '',
+    ]
+    fonts = [
+            'Open Sans.zip'  : 'https://www.google.com/fonts/download?kit=3hvsV99qyKCBS55e5pvb3ltkqrIMaAZWyLYEoB48lSQ',
+            'Inconsolata.zip': 'https://www.google.com/fonts/download?kit=CNj0Ze1H6w4FVgc32wmZS4fD-WQWLbF4rYwcBGowFYY',
+            'Lora.zip'       : 'https://www.google.com/fonts/download?kit=iwrHM7FQEcKgsUvDuXxrPg',
+    ]
 }
 
 ext {
     driverLanguages = [
             'dotnet': [
                     'name'   : 'C#',
-                    'version': '1.2.0',
-                    'gitref' : '1.2.0',
+                    'version': '1.4.0',
+                    'gitref' : '1.4.0',
                     'url'    : 'https://www.nuget.org/packages/Neo4j.Driver'
             ],
             'java': [
                     'name'   : 'Java',
-                    'version': '1.2.0',
-                    'gitref' : '1.2.0',
+                    'version': '1.4.0',
+                    'gitref' : '1.4.0',
                     'url'    : 'http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.neo4j.driver%22%20AND%20a%3A%22neo4j-java-driver%22'
             ],
             'javascript': [
                     'name'   : 'JavaScript',
-                    'version': '1.1.0',
-                    'gitref' : '1.1.0',
+                    'version': '1.4.0',
+                    'gitref' : '1.4.0',
                     'url'    : 'https://www.npmjs.com/package/neo4j-driver'
             ],
             'python'    : [
                     'name'   : 'Python',
-                    'version': '1.1.0',
-                    'gitref' : '1.1.0',
+                    'version': '1.4.0',
+                    'gitref' : '1.4.0',
                     'url'    : 'https://pypi.python.org/pypi/neo4j-driver'
             ]
     ]
@@ -205,6 +189,11 @@ ext {
 }
 
 project.ext.driverLanguages.each { lang, info ->
+    project.ext.commonAsciidoctorAttributes["$lang-driver-version"] = info['version']
+    project.ext.commonAsciidoctorAttributes["$lang-root"] = targetGitdir(lang, info['gitref'])
+    project.ext.htmlAsciidoctorAttributes["include-with-$lang"] = ''
+    project.ext.docbookAsciidoctorAttributes["include-with-$lang"] = ''
+
     task ("${lang}DriverApiDocs", type: Tar) {
         description "Package API docs for the ${lang} driver."
         println "Packaging API docs for the ${lang} driver from a manually build, local, static copy."
@@ -236,10 +225,434 @@ project.ext.driverLanguages.each { lang, info ->
     }
 }
 
+def driverSourcesTasks = driverLanguages.collect {"${it.getKey()}DriverSources"}
+task prepareDriverSources(dependsOn: driverSourcesTasks){
+    description "Prepare driver sources."
+}
+
+// task prepareDriverDocs {
+//     description 'Clones the driver documentation from GitHub.'
+//     outputs.dir file(driverDocsBuildDir)
+//     onlyIf { !file(driverDocsBuildDir).exists() }
+//     doLast {
+//         println "Cloning driver-documentation repository."
+//         Grgit.clone(dir: file(driverDocsBuildDir), uri: driverDocsGitUri, refToCheckout: driverDocsGitRef)
+//     }
+// }
+
+task toDocbook(dependsOn: prepareDriverSources) {
+    description 'Build Neo4j Object-Graph Mapping (OGM) Manual Docbook output.'
+    ext.sourceDir = "${projectDir}/src/main/asciidoc"
+    def sourceFile = new File("${sourceDir}/index.adoc")
+    def imagesDir = '../images'
+    def docbookOutputDir = "${buildDir}/docbook/${driverDocVersion}"
+    def driverDocsSourceDir = "${driverDocsBuildDir}/src/main/asciidoc"
+    def templateDir = "${resourcesDir}/templates/docbook"
+    inputs.dir sourceDir
+    outputs.dir docbookOutputDir
+    doLast {
+        def attrs = project.ext.commonAsciidoctorAttributes + project.ext.docbookAsciidoctorAttributes +
+                [
+                    // 'importdir'              : importDir,
+                    'driver-docs-source-dir' : driverDocsSourceDir,
+                    'driver-manual-version'  : driverDocVersion,
+                    'driver-manual-title'    : "Drivers",
+                    'project-root'           : "${rootProject.projectDir}",
+                    // 'initial-leveloffset'    : '0',
+                    'docinfo1'               : '',
+                    'csv-dir'                : "${docsCrossReferenceBaseUris['cypher-manual-base-uri']}/csv",
+                    'version'                : driverDocVersion,
+                ]
+        // def attrs = project.ext.commonAsciidoctorAttributes + [
+        //     'version'             : driverDocVersion,
+        //     'docinfo1'            : '',
+        // ]
+        attrs['imagesdir'] = imagesDir
+        attrs['stylesheet'] = 'github.css'
+        attrs['stylesdir'] = '../css'
+        attrs['linkcss'] = ''
+        def opts = OptionsBuilder.options()
+                .backend('docbook5')
+                .safe(SafeMode.UNSAFE)
+                .toDir(new File(docbookOutputDir))
+                .templateDir(new File(templateDir))
+                .mkDirs(true)
+                .attributes(attrs)
+        def asciidoctor = getAsciidoctor(sourceDir, imagesDir, false, true)
+        asciidoctor.convertFile(sourceFile, opts.get())
+    }
+    finalizedBy {toDocbookCopyResources}
+    finalizedBy {preprocess}
+}
+
+task toDocbookCopyResources(type: Copy) {
+    from(projectDir) {
+        include 'images/**'
+    }
+    from (toDocbook.sourceDir) {
+        include "images/**"
+    }
+    into "${buildDir}/docbook/${driverDocVersion}"
+}
+
+preprocess {
+    description 'Fix things in the DocBook XML before further processing.'
+    dependsOn toDocbook
+    def sourceFile = "${buildDir}/docbook/${driverDocVersion}/index.xml"
+    def toolsDir = "${rootProject.projectDir}/docbook"
+
+    doFirst {
+        def cmd = ["${projectDir}/bin/post-process.sh", sourceFile, "${projectDir}/bin/post-process.sed"]
+        runCommand(cmd)
+    }
+
+    input sourceFile
+    outFile sourceFile
+
+    parameters([
+        "book-id": "$docId"
+    ])
+}
+
+html {
+    description 'Build Neo4j Object-Graph Mapping (OGM) Manual to multi-page HTML.'
+    dependsOn toDocbook
+    doFirst { println "[+] Building Neo4j Object-Graph Mapping (OGM) Manual multi-page HTML" }
+    def docbookInputDir = "${buildDir}/docbook/${driverDocVersion}"
+    def sourceFile = "${docbookInputDir}/index.xml"
+    def outputDir = "${buildDir}/html/${driverDocVersion}"
+    def toolsDir = "${rootProject.projectDir}/docbook"
+    def css = [
+        '//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css',
+        '//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.1.0/css/font-awesome.min.css',
+        '//fonts.googleapis.com/css?family=Open+Sans:400,300,400italic,600,300italic',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/codemirror.min.css',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/theme/neo.min.css',
+        'css/extra.css',
+        'css/chunked-base.css'
+    ].join(" ")
+    def scripts = [
+        '//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js',
+        '//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/codemirror.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/addon/runmode/runmode.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/javascript/javascript.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/shell/shell.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/python/python.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/xml/xml.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/clike/clike.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/cypher/cypher.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/properties/properties.min.js',
+        '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/groovy/groovy.min.js',
+        'javascript/colorize.js',
+        'javascript/tabs-for-chunked.js',
+        'javascript/mutate.min.js',
+        'javascript/jquery/treeview/jquery.treeview.min.js',
+        'javascript/mp-nav.js',
+        'javascript/versionswitcher.js',
+        'javascript/version.js',
+    ].join(" ")
+
+    // Task configuration
+    inputs.dir docbookInputDir
+    outputs.dir outputDir
+
+    stylesheet "classpath:xsl/custom/xhtml5/chunk.xsl"
+    input sourceFile
+
+    // Stylesheet parameters
+    parameters ([
+            "base.dir": "${outputDir}",
+            "chunk.section.depth": "0",
+            "html.ext": ".html",
+            "make.clean.html": "1",
+            "chunker.output.method": "html",
+            "chunker.output.encoding": "UTF-8",
+            "chunker.output.indent": "yes",
+            "use.id.as.dirname": "1",
+            "html.stylesheet": "${css}",
+            "html.script": "${scripts}",
+            "neo.search": "1",
+            "generate.toc": "''",
+            "header.rule": "0",
+            "neo.documentation.library.links":
+            """
+            Operations_Manual=${docsCrossReferenceBaseUris['operations-manual-base-uri']}/
+            Cypher_Manual=${docsCrossReferenceBaseUris['cypher-manual-base-uri']}/
+            Driver_Manual=${docsCrossReferenceBaseUris['driver-manual-base-uri']}/
+            OGM_Manual=${docsCrossReferenceBaseUris['ogm-manual-base-uri']}/
+            Java_Reference=${docsCrossReferenceBaseUris['java-reference-base-uri']}/
+            REST_Docs=${docsCrossReferenceBaseUris['rest-docs-base-uri']}/
+            """,
+            "target.database.document": "file://${olinkdb}",
+            "current.docid": "$docId"
+    ])
+    finalizedBy { copyHtmlResources }
+}
+
+task copyHtmlResources(type: Copy) {
+    description 'Copy resources for the multi-page Neo4j Object-Graph Mapping (OGM) Manual'
+    inputs.dir "${projectDir}/resources/css"
+    inputs.dir "${projectDir}/resources/javascript"
+    inputs.dir "${projectDir}/resources/images"
+    inputs.dir "${resourcesDir}/css"
+    inputs.dir "${resourcesDir}/javascript"
+    from ("${toDocbook.sourceDir}") {
+        include 'images/**'
+    }
+    from ("${resourcesDir}") {
+        include 'images/**'
+        include 'javascript/**'
+        include 'css/**'
+    }
+    from ("${projectDir}/resources") {
+        include 'images/**'
+        include 'css/extra.css'
+        include 'css/chunked-base.css'
+        include 'javascript/colorize.js'
+        include 'javascript/tabs-for-chunked.js'
+        include 'javascript/mp-nav.js'
+        include 'javascript/mutate.min.js'
+        include 'javascript/jquery/treeview/jquery.treeview.min.js'
+        include 'javascript/versionswitcher.js'
+        include 'javascript/version.js'
+    }
+    into "${buildDir}/html/${driverDocVersion}"
+}
+
+// task copyHtmlResources(type: Copy) {
+//     description 'Copy resources for the chunked Developer Manual'
+//     from ("${projectDir}") {
+//         include 'images/**'
+//         include 'javascript/**'
+//         include 'css/**'
+//     }
+//     from ("${rootProject.projectDir}/docbook/resources") {
+//         include 'css/extra.css'
+//         include 'css/github.css'
+//         include 'css/images/**'
+//     }
+//     from ("${rootProject.projectDir}/src/main/resources") {
+//         include 'logo/**'
+//         include 'css/chunked-base.css'
+//         include 'javascript/colorize.js'
+//         include 'javascript/tabs-for-chunked.js'
+//         include 'javascript/mp-nav.js'
+//         include 'javascript/versionswitcher.js'
+//     }
+//     from ("${buildDir}/docbook/${neo4jDocVersion}") {
+//         include "csv/**"
+//     }
+//     into "${buildDir}/html/${neo4jDocVersion}"
+// }
+
+
+task packageHtml(type: Tar, dependsOn: html) {
+    baseName "driver-manual"
+    version driverDocVersion
+    extension 'tar.gz'
+    compression Compression.GZIP
+    from {
+        "${buildDir}/html/${driverDocVersion}"
+    }
+    into {
+        "${baseName}/${driverDocVersion}"
+    }
+    destinationDir file("$rootProject.buildDir/distributions")
+}
+
+def targetGitdir(lang, gitref) {
+    if (project.hasProperty('localDriverSources')) {
+        file("$projectDir/../neo4j-$lang-driver")
+    } else {
+        file("${rootProject.buildDir}/driver-sources/${lang}-driver/${gitref}")
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////
+//// THIS BUILD SCRIPT IS NOT KEPT UP-TO-DATE
+//// THE DRIVER DOCUMENTATION IS A PART OF THE NEO4J DEVELOPER MANUAL
+//// TO BUILD THE DRIVER MANUAL INDEPENDENTLY, UPDATE THE VERSIONS BELOW
+////
+//allprojects {
+
+//    apply plugin: 'base'
+
+//    repositories {
+//        // NB: "However, as Gradle prefers to use modules whose descriptor has been created from real meta-data rather than
+//        // being generated, flat directory repositories cannot be used to override artifacts with real meta-data from other
+//        // repositories." https://docs.gradle.org/current/userguide/dependency_management.html#sec:flat_dir_resolver
+//        flatDir {
+//            dirs "${rootProject.projectDir}/shared"
+//        }
+//        maven {
+//            url "https://m2.neo4j.org/content/repositories/snapshots/"
+//        }
+//        mavenCentral()
+//    }
+
+//    ext {
+//        neo4jManualContentsDir = "${rootProject.buildDir}/neo4j-docs-content/neo4j-manual-contents/${neo4jVersion}"
+//        neo4jJavadocsDir = "${rootProject.buildDir}/neo4j-docs-content/neo4j-javadocs/${neo4jVersion}"
+//        driverDocVersion = driverVersion
+//        copyrightYear = '2017'
+//        docsBaseUri = "https://neo4j.com/docs"
+//        docsCrossReferenceBaseUris = [
+//                'operations-manual-base-uri' : "${docsBaseUri}/operations-manual/${neo4jDocVersion}",
+//                'developer-manual-base-uri'  : "${docsBaseUri}/developer-manual/${neo4jDocVersion}",
+//                'java-reference-base-uri'    : "${docsBaseUri}/java-reference/${neo4jDocVersion}",
+//                'rest-docs-base-uri'         : "${docsBaseUri}/rest-docs/${neo4jDocVersion}",
+//                'ogm-manual-base-uri'        : "${docsBaseUri}/ogm-manual/${ogmDocVersion}"
+//        ]
+//        commonAsciidoctorAttributes = [
+//                'copyright-year'                   : copyrightYear,
+//                'copyright'                        : "${copyrightYear} Neo Technology",
+//                'common-license-page-uri'          : "${docsBaseUri}/license",
+//                'neo4j-version'                    : neo4jDocVersion,
+//                'neo4j-version-exact'              : neo4jVersion,
+//                'neo4j-git-version'                : neo4jDocVersion,
+//                'doctype'                          : 'book',
+//                'icons'                            : 'font',
+//                'imagesdir'                        : './images',
+//                'attribute-missing'                : 'warn',
+//                'neo4j-server-docs-dir'            : "${neo4jManualContentsDir}/docs/neo4j-server-docs-docs-jar",
+//                'neo4j-enterprise-server-docs-dir' : "${neo4jManualContentsDir}/docs/neo4j-server-enterprise-docs-docs-jar",
+//        ] + docsCrossReferenceBaseUris
+//        htmlAsciidoctorAttributes = [
+//                'toc'        : 'left',
+//                'stylesdir'  : 'css',
+//                'stylesheet' : 'style.css',
+//                'sectanchors': '',
+//                'docinfo1'   : '',
+//                'linkcss'    : ''
+//        ]
+//        docbookAsciidoctorAttributes = [:]
+//        pdfAsciidoctorAttributes = [
+//                'source-highlighter': 'rouge',
+//                'pdf-style'         : 'neo',
+//                'pdf-fontsdir'      : "$rootProject.buildDir/fonts".toString(),
+//                'doctype'           : 'book',
+//                'toc'               : '',
+//                'showlinks'         : '',
+//                'nonhtmloutput'     : '',
+//        ]
+//        fonts = [
+//                'Open Sans.zip'  : 'https://www.google.com/fonts/download?kit=3hvsV99qyKCBS55e5pvb3ltkqrIMaAZWyLYEoB48lSQ',
+//                'Inconsolata.zip': 'https://www.google.com/fonts/download?kit=CNj0Ze1H6w4FVgc32wmZS4fD-WQWLbF4rYwcBGowFYY',
+//                'Lora.zip'       : 'https://www.google.com/fonts/download?kit=iwrHM7FQEcKgsUvDuXxrPg',
+//        ]
+//    }
+//}
+
+
 def deps = driverLanguages.collect {"${it.getKey()}DriverApiDocs"}
 task driverApiDocsPackage(dependsOn: deps) {
     description 'Package the driver API docs.'
 }
+
+
+
+
+
+
+
+
+
+
 
 def getAsciidoctor(sourceDir, imagesDir, doConsole, filterTabbedExamples) {
 
@@ -396,9 +809,11 @@ def getAsciidoctor(sourceDir, imagesDir, doConsole, filterTabbedExamples) {
 
     project.ext.adoc
 }
-asciidoctorPdf.onlyIf { !project.hasProperty('noPdf') }
 
-task('dist', dependsOn: ['asciidoctorHtml', 'asciidoctorPdf']) {
-    description 'Build HTML and PDF outputs.'
-}
+// asciidoctorPdf.onlyIf { !project.hasProperty('noPdf') }
 
+// task('dist', dependsOn: ['asciidoctorHtml', 'asciidoctorPdf']) {
+//     description 'Build HTML and PDF outputs.'
+// }
+
+// vim: set fdm=expr:

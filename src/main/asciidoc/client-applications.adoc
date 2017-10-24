@@ -12,7 +12,7 @@ This section describes how to manage database connections within an application.
 
 A Neo4j client application will require a driver object instance in order to provide access to the database.
 This object instance should be made available to all parts of the application that need to interact with Neo4j.
-In languages where <<term-thread-safety, thread safety>> is an issue, the driver can be considered thread-safe.
+In languages where <<developer-manual#term-thread-safety, thread safety>> is an issue, the driver can be considered thread-safe.
 
 [TIP]
 .A note on lifecycle
@@ -91,7 +91,7 @@ Note that a Routing driver is preferable when working with a causal cluster.
 
 A Routing driver is created via a `bolt+routing` URI, for example: `bolt+routing://graph.example.com:7687`.
 The address in the URI must be that of a core server.
-This kind of driver uses the <<term-bolt-routing-protocol, Bolt Routing Protocol>> and works in tandem with the cluster to route transactions to available cluster members.
+This kind of driver uses the <<developer-manual#term-bolt-routing-protocol, Bolt Routing Protocol>> and works in tandem with the cluster to route transactions to available cluster members.
  
 === Routing drivers with routing context
 

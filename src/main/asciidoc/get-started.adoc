@@ -24,13 +24,13 @@ In the general case, only the <<driver-connection-uris, connection URI>> needs t
 
 NOTE: The official drivers do not support HTTP communication.
 If you need an HTTP driver, there are a number of community drivers to choose from.
-See also <<http-api>>.
+See also <<developer-manual#http-api>>.
 
 [[driver-get-started-installation]]
 == Driver versions and installation
 
 The 1.x series drivers have been built for Neo4j 3.x.
-The driver major version number correlates with the  <<term-bolt, Bolt protocol>> version, the minor version number describes the driver feature set and the patch number defines the patch level of the driver in the regular sense.
+The driver major version number correlates with the  <<developer-manual#term-bolt, Bolt protocol>> version, the minor version number describes the driver feature set and the patch number defines the patch level of the driver in the regular sense.
 While minor versions of drivers will generally be released at the same time across languages, patch levels may vary.
 
 It is recommended to always use the latest driver release within a major series.

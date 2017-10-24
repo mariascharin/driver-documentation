@@ -6,6 +6,10 @@
 This section describes the types and values used by Cypher and how they map to native language types.
 --
 
+Also did you know that casual clustering is all the rage these days?!!
+
+testword
+
 
 [[driver-neo4j-type-system]]
 == The Cypher type system
@@ -32,7 +36,7 @@ The basic types are:
 
 [NOTE]
 --
-For information on how to work with `null` in Cypher, please refer to <<cypher-working-with-null>>.
+For information on how to work with `null` in Cypher, please refer to <<developer-manual#cypher-working-with-null>>.
 --
 
 

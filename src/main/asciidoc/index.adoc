@@ -18,6 +18,8 @@ ifndef::python-root[:python-root: {project-root}/build/driver-sources/python-dri
 
 :api-docs-base-uri: https://neo4j.com/docs/api
 
+:leveloffset: 0
+
 
 [abstract]
 --
@@ -45,4 +47,36 @@ include::client-applications.adoc[leveloffset=+1]
 include::sessions-and-transactions.adoc[leveloffset=+1]
 
 include::working-with-cypher-values.adoc[leveloffset=+1]
+
+
+
+// == Dummy IDs
+
+// [[http-api]]
+// http-api
+
+// [[term-bolt]]
+// term-bolt
+
+// [[term-thread-safety]]
+// term-thread-safety
+
+// [[term-bolt-routing-protocol]]
+// term-bolt-routing-protocol
+
+// [[cypher-values]]
+// cypher-values
+
+// [[query-using-periodic-commit-hint]]
+// query-using-periodic-commit-hint
+
+// [[status-codes]]
+// status-codes
+
+// [[term-bookmark]]
+// term-bookmark
+
+// [[cypher-working-with-null]]
+// cypher-working-with-null
+
 

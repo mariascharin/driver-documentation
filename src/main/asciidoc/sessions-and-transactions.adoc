@@ -12,7 +12,7 @@ This section describes how to create units of work and provide a logical context
 
 A session is a container for a sequence of transactions.
 Sessions borrow connections from a pool as required and so should be considered lightweight and disposable.
-In languages where <<term-thread-safety, thread safety>> is an issue, a session should _not_ be considered thread-safe.
+In languages where <<developer-manual#term-thread-safety, thread safety>> is an issue, a session should _not_ be considered thread-safe.
 
 In languages that support them, sessions are usually scoped within a context block.
 This ensures that they are properly closed and that any underlying connections are released and not leaked.
@@ -68,7 +68,7 @@ To execute a Cypher statement, two pieces of information are required: the state
 The template is a string containing placeholders that are substituted with parameter values at runtime.
 While it is possible to run non-parameterized Cypher, good programming practice is to use parameters in Cypher statements.
 This allows for caching of statements within the Cypher engine, which is beneficial for performance.
-Parameter values should adhere to <<cypher-values>>.
+Parameter values should adhere to <<developer-manual#cypher-values>>.
 
 The Neo4j driver API provides for three forms of transaction:
 
@@ -133,7 +133,7 @@ This means that multiple transactions cannot share network packets, thereby exhi
 Auto-commit transactions are intended to be used for simple use cases such as when learning Cypher or writing one-off scripts.
 It is not recommended to use auto-commit transactions in production environments or when performance or resilience are a primary concern.
 
-However, Auto-commit transactions are the only way to execute `<<query-using-periodic-commit-hint, USING PERIODIC COMMIT>>` Cypher statements.
+However, Auto-commit transactions are the only way to execute `<<developer-manual#query-using-periodic-commit-hint, USING PERIODIC COMMIT>>` Cypher statements.
 
 
 [[driver-transactions-transaction-functions]]
@@ -196,7 +196,7 @@ While this form is useful for a handful of use cases, it is recommended to use t
 === Cypher errors
 
 When executing Cypher, it is possible for an exception to be thrown by the Cypher engine.
-Each such exception is associated with a <<status-codes, status code>> that describes the nature of the error and a message that provides more detail.
+Each such exception is associated with a <<developer-manual#status-codes, status code>> that describes the nature of the error and a message that provides more detail.
 
 The error classifications are listed in the table below.
 
@@ -222,7 +222,7 @@ When working with a causal cluster, the transactions in a session will automatic
 This means that for any two transactions, it is guaranteed that the second transaction will begin only after the first has been successfully committed.
 This is true even if the transactions are physically carried out on different cluster members.
 
-Causal chaining is carried out by passing <<term-bookmark, bookmarks>> between transactions in a session.
+Causal chaining is carried out by passing <<developer-manual#term-bookmark, bookmarks>> between transactions in a session.
 Each bookmark records a point in transactional history and is used to instruct the cluster to carry out work in a particular sequence.
 Bookmarks are returned from the server to the client on the successful commit of a transaction and may be supplied as parameters to new transactions.
 Passing bookmarks into a transaction causes the executing server to block until it has caught up with the latest of these bookmarks.
