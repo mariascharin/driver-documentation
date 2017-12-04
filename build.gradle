@@ -320,6 +320,8 @@ html {
     doFirst { println "[+] Building Neo4j Object-Graph Mapping (OGM) Manual multi-page HTML" }
     def docbookInputDir = "${buildDir}/docbook/${driverDocVersion}"
     def sourceFile = "${docbookInputDir}/index.xml"
+    def docbookSourceDir = "${projectDir}/src/main/docbook"
+    def contentMap = "${docbookSourceDir}/content-map.xml"
     def outputDir = "${buildDir}/html/${driverDocVersion}"
     def toolsDir = "${rootProject.projectDir}/docbook"
     def css = [
@@ -346,8 +348,6 @@ html {
         '//cdnjs.cloudflare.com/ajax/libs/codemirror/5.11.0/mode/groovy/groovy.min.js',
         'javascript/colorize.js',
         'javascript/tabs-for-chunked.js',
-        'javascript/mutate.min.js',
-        'javascript/jquery/treeview/jquery.treeview.min.js',
         'javascript/mp-nav.js',
         'javascript/versionswitcher.js',
         'javascript/version.js',
@@ -356,8 +356,6 @@ html {
     // Task configuration
     inputs.dir docbookInputDir
     outputs.dir outputDir
-
-    stylesheet "classpath:xsl/custom/xhtml5/chunk.xsl"
     input sourceFile
 
     // Stylesheet parameters
@@ -374,6 +372,7 @@ html {
             "html.script": "${scripts}",
             "neo.search": "1",
             "generate.toc": "''",
+            "chunk.toc": "${contentMap}",
             "header.rule": "0",
             "neo.documentation.library.links":
             """
@@ -412,40 +411,11 @@ task copyHtmlResources(type: Copy) {
         include 'javascript/colorize.js'
         include 'javascript/tabs-for-chunked.js'
         include 'javascript/mp-nav.js'
-        include 'javascript/mutate.min.js'
-        include 'javascript/jquery/treeview/jquery.treeview.min.js'
         include 'javascript/versionswitcher.js'
         include 'javascript/version.js'
     }
     into "${buildDir}/html/${driverDocVersion}"
 }
-
-// task copyHtmlResources(type: Copy) {
-//     description 'Copy resources for the chunked Developer Manual'
-//     from ("${projectDir}") {
-//         include 'images/**'
-//         include 'javascript/**'
-//         include 'css/**'
-//     }
-//     from ("${rootProject.projectDir}/docbook/resources") {
-//         include 'css/extra.css'
-//         include 'css/github.css'
-//         include 'css/images/**'
-//     }
-//     from ("${rootProject.projectDir}/src/main/resources") {
-//         include 'logo/**'
-//         include 'css/chunked-base.css'
-//         include 'javascript/colorize.js'
-//         include 'javascript/tabs-for-chunked.js'
-//         include 'javascript/mp-nav.js'
-//         include 'javascript/versionswitcher.js'
-//     }
-//     from ("${buildDir}/docbook/${neo4jDocVersion}") {
-//         include "csv/**"
-//     }
-//     into "${buildDir}/html/${neo4jDocVersion}"
-// }
-
 
 task packageHtml(type: Tar, dependsOn: html) {
     baseName "driver-manual"
@@ -469,190 +439,10 @@ def targetGitdir(lang, gitref) {
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-////
-//// THIS BUILD SCRIPT IS NOT KEPT UP-TO-DATE
-//// THE DRIVER DOCUMENTATION IS A PART OF THE NEO4J DEVELOPER MANUAL
-//// TO BUILD THE DRIVER MANUAL INDEPENDENTLY, UPDATE THE VERSIONS BELOW
-////
-//allprojects {
-
-//    apply plugin: 'base'
-
-//    repositories {
-//        // NB: "However, as Gradle prefers to use modules whose descriptor has been created from real meta-data rather than
-//        // being generated, flat directory repositories cannot be used to override artifacts with real meta-data from other
-//        // repositories." https://docs.gradle.org/current/userguide/dependency_management.html#sec:flat_dir_resolver
-//        flatDir {
-//            dirs "${rootProject.projectDir}/shared"
-//        }
-//        maven {
-//            url "https://m2.neo4j.org/content/repositories/snapshots/"
-//        }
-//        mavenCentral()
-//    }
-
-//    ext {
-//        neo4jManualContentsDir = "${rootProject.buildDir}/neo4j-docs-content/neo4j-manual-contents/${neo4jVersion}"
-//        neo4jJavadocsDir = "${rootProject.buildDir}/neo4j-docs-content/neo4j-javadocs/${neo4jVersion}"
-//        driverDocVersion = driverVersion
-//        copyrightYear = '2017'
-//        docsBaseUri = "https://neo4j.com/docs"
-//        docsCrossReferenceBaseUris = [
-//                'operations-manual-base-uri' : "${docsBaseUri}/operations-manual/${neo4jDocVersion}",
-//                'developer-manual-base-uri'  : "${docsBaseUri}/developer-manual/${neo4jDocVersion}",
-//                'java-reference-base-uri'    : "${docsBaseUri}/java-reference/${neo4jDocVersion}",
-//                'rest-docs-base-uri'         : "${docsBaseUri}/rest-docs/${neo4jDocVersion}",
-//                'ogm-manual-base-uri'        : "${docsBaseUri}/ogm-manual/${ogmDocVersion}"
-//        ]
-//        commonAsciidoctorAttributes = [
-//                'copyright-year'                   : copyrightYear,
-//                'copyright'                        : "${copyrightYear} Neo Technology",
-//                'common-license-page-uri'          : "${docsBaseUri}/license",
-//                'neo4j-version'                    : neo4jDocVersion,
-//                'neo4j-version-exact'              : neo4jVersion,
-//                'neo4j-git-version'                : neo4jDocVersion,
-//                'doctype'                          : 'book',
-//                'icons'                            : 'font',
-//                'imagesdir'                        : './images',
-//                'attribute-missing'                : 'warn',
-//                'neo4j-server-docs-dir'            : "${neo4jManualContentsDir}/docs/neo4j-server-docs-docs-jar",
-//                'neo4j-enterprise-server-docs-dir' : "${neo4jManualContentsDir}/docs/neo4j-server-enterprise-docs-docs-jar",
-//        ] + docsCrossReferenceBaseUris
-//        htmlAsciidoctorAttributes = [
-//                'toc'        : 'left',
-//                'stylesdir'  : 'css',
-//                'stylesheet' : 'style.css',
-//                'sectanchors': '',
-//                'docinfo1'   : '',
-//                'linkcss'    : ''
-//        ]
-//        docbookAsciidoctorAttributes = [:]
-//        pdfAsciidoctorAttributes = [
-//                'source-highlighter': 'rouge',
-//                'pdf-style'         : 'neo',
-//                'pdf-fontsdir'      : "$rootProject.buildDir/fonts".toString(),
-//                'doctype'           : 'book',
-//                'toc'               : '',
-//                'showlinks'         : '',
-//                'nonhtmloutput'     : '',
-//        ]
-//        fonts = [
-//                'Open Sans.zip'  : 'https://www.google.com/fonts/download?kit=3hvsV99qyKCBS55e5pvb3ltkqrIMaAZWyLYEoB48lSQ',
-//                'Inconsolata.zip': 'https://www.google.com/fonts/download?kit=CNj0Ze1H6w4FVgc32wmZS4fD-WQWLbF4rYwcBGowFYY',
-//                'Lora.zip'       : 'https://www.google.com/fonts/download?kit=iwrHM7FQEcKgsUvDuXxrPg',
-//        ]
-//    }
-//}
-
-
 def deps = driverLanguages.collect {"${it.getKey()}DriverApiDocs"}
 task driverApiDocsPackage(dependsOn: deps) {
     description 'Package the driver API docs.'
 }
-
-
-
-
-
-
-
-
-
-
 
 def getAsciidoctor(sourceDir, imagesDir, doConsole, filterTabbedExamples) {
 
