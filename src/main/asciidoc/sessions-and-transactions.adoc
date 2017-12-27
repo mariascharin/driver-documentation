@@ -297,8 +297,6 @@ Java, .NET and JavaScript all support asynchronous programming.
 The examples here highlight specifically how Java and .NET provide for this programming model alongside their blocking API.
 --
 
-In addition to the methods listed in the previous sections, there also exist several asynchronous methods which allow for better integration with applications written in an asynchronous style.
-Asynchronous methods are named as their synchronous counterparts but with an additional _async_ prefix.
 
 [.tabbed-example]
 .Asynchronous programming examples

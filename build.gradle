@@ -42,14 +42,14 @@ repositories {
        mavenLocal()
 }
 
-version = '1.4'
+version = '1.5'
 
 def traceDocbook = hasProperty('traceDocbook') ? true : false
 
 // def docsRepository = System.env.MAVEN_REPO_LOCAL
 
 if (!project.hasProperty("neo4jVersion")) { ext.neo4jVersion = "3.4.0-SNAPSHOT" }
-if (!project.hasProperty("driverVersion")) { ext.driverVersion = "1.4" }
+if (!project.hasProperty("driverVersion")) { ext.driverVersion = "1.5" }
 if (!project.hasProperty("ogmVersion")) { ext.ogmVersion = "2.1.2" }
 // if (null == docsRepository) { ext.docsRepository = "https://m2.neo4j.org/content/repositories/snapshots/" }
 
@@ -62,7 +62,7 @@ configurations {
 ext {
     driverDocsBuildDir = "${rootProject.buildDir}/driver-documentation/${driverVersion}"
     driverDocsGitUri = "https://github.com/neo4j/driver-documentation.git"
-    driverDocsGitRef = "1.4"
+    driverDocsGitRef = "1.5"
 }
 ext {
     // Set `neo4jDocVersion` for use in the generated docs
@@ -136,26 +136,26 @@ ext {
     driverLanguages = [
             'dotnet': [
                     'name'   : 'C#',
-                    'version': '1.4.0',
-                    'gitref' : '1.4.0',
+                    'version': '1.5.2',
+                    'gitref' : '1.5.2',
                     'url'    : 'https://www.nuget.org/packages/Neo4j.Driver'
             ],
             'java': [
                     'name'   : 'Java',
-                    'version': '1.4.0',
-                    'gitref' : '1.4.0',
+                    'version': '1.5.0',
+                    'gitref' : '1.5.0',
                     'url'    : 'http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.neo4j.driver%22%20AND%20a%3A%22neo4j-java-driver%22'
             ],
             'javascript': [
                     'name'   : 'JavaScript',
-                    'version': '1.4.0',
-                    'gitref' : '1.4.0',
+                    'version': '1.5.1',
+                    'gitref' : '1.5.1',
                     'url'    : 'https://www.npmjs.com/package/neo4j-driver'
             ],
             'python'    : [
                     'name'   : 'Python',
-                    'version': '1.4.0',
-                    'gitref' : '1.4.0',
+                    'version': '1.5.3',
+                    'gitref' : '1.5.3',
                     'url'    : 'https://pypi.python.org/pypi/neo4j-driver'
             ]
     ]
