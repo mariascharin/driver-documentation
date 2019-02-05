@@ -55,7 +55,11 @@ configurations {
 }
 
 def traceDocbook = hasProperty('traceDocbook') ? true : false
-if (!project.hasProperty("neo4jVersion")) { ext.neo4jVersion = "3.5.0-SNAPSHO" }
+    if (project.hasProperty("versions.neo4j"))  
+    ext.neo4jVersion = project.findProperty("versions.neo4j")
+    else if (project.hasProperty("neo4jVersion"))
+    ext.neo4jVersion = project.findProperty("neo4jVersion")
+    else  ext.neo4jVersion = "3.5.0-SNAPSHOT"
 if (!project.hasProperty("driverVersion")) { ext.driverVersion = version }
 if (!project.hasProperty("ogmVersion")) { ext.ogmVersion = "2.1.2" }
 
