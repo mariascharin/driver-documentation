@@ -438,6 +438,7 @@ span#nav-current {
     margin-left: auto;
     padding-right: 10px;
   }
+
   div#additional-versions a {
     color: #999;
     text-transform: uppercase;
@@ -539,6 +540,12 @@ span#nav-current {
 
   body {
     padding-left: 20em;
+  }
+
+  div#additional-versions {
+    color: #999;
+    text-transform: uppercase;
+    font-size: 13px;
   }
 
   div#additional-versions a {

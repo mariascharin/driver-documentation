@@ -35,14 +35,15 @@ function versionSwitcher( $ )
         versionCount++;
       }
     } );
-
-    var $dropdown = $( '<div id="additional-versions"><div class="dropdown"><a class="dropdown-toggle"id="dropdownMenu1" data-toggle="dropdown">Versions <i class="fa fa-caret-down"></i></a></div></div>' );
-    $dropdown.children().first().append( $additionalVersions );
-    $navHeader.append( $dropdown );
-    if ( versionCount == 0)
-    {
-      $dropdown.css('visibility', 'hidden');
+    if ( versionCount == 0){
+      var $dropdown = $( '<div id="additional-versions"><div class="additional-versions">Version: ' + currentVersion + ' </div></div>' );
+    } else {
+      var $dropdown = $( '<div id="additional-versions"><div class="dropdown"><a class="dropdown-toggle"id="dropdownMenu1" data-toggle="dropdown">Version: ' + currentVersion + ' <i class="fa fa-caret-down"></i></a></div></div>' );
+      $dropdown.children().first().append( $additionalVersions );
     }
+
+
+    $navHeader.append( $dropdown );
   }
 
   function addVersion( version, $container ) {
